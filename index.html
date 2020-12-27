@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<button id="btn_start">start</button>
+<button id="btn_stop">stop</button>
+
+<div>
+  <span id="text_final"></span>
+  <i id="text_interim" style="color: #ddd"></i>
+</div>
+
+
+<script>
+  // based on https://qiita.com/hmmrjn/items/4b77a86030ed0071f548
+
+  const startBtn = document.querySelector('#btn_start');
+  const stopBtn = document.querySelector('#btn_stop');
+  const interimElement = document.querySelector('#text_interim');
+  const finalElement = document.querySelector('#text_final');
+
+
+  SpeechRecognition = webkitSpeechRecognition || SpeechRecognition;
+  let recognition = new SpeechRecognition();
+
+  recognition.lang = 'ja-JP';
+  recognition.interimResults = true;
+  recognition.continuous = true;
+
+  let finalTranscript = '';
+  let userStopping = false;
+
+  recognition.onresult = (event) => {
+    let interimTranscript = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      let transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        finalTranscript += transcript;
+      } else {
+        interimTranscript = transcript;
+      }
+    }
+
+    interimElement.innerText = interimTranscript;
+    finalElement.innerText = finalTranscript;
+  };
+
+  recognition.onstart = (event) => {
+    console.log('started recognition');
+  };
+  recognition.onend = (event) => {
+    if (! userStopping) {
+      recognition.start();
+      console.log('restarting recognition automatically');
+    }
+    else {
+      userStopping = false;
+      console.log('user stopped recognition');
+    }
+  };
+
+  startBtn.onclick = () => {
+    recognition.start();
+  }
+  stopBtn.onclick = () => {
+    userStopping = true;
+    recognition.stop();
+  }
+</script>
